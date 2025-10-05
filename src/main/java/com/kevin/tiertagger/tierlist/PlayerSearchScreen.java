@@ -89,7 +89,7 @@ public class PlayerSearchScreen extends CloseableScreen {
 
         this.future = TierCache.searchPlayer(username)
                 .thenCombine(skinFuture, (info, skin) -> new PlayerInfoScreen(this, info, skin))
-                .thenAccept(MinecraftClient.getInstance()::setScreen)
+                .thenAccept(screen -> MinecraftClient.getInstance().execute(() -> MinecraftClient.getInstance().setScreen(screen)))
                 .whenComplete((v, t) -> {
                     if (t != null) {
                         Ukutils.sendToast(Text.translatable("tiertagger.search.unknown"), null);
