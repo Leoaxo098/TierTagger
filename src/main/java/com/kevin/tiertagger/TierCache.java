@@ -33,7 +33,7 @@ public class TierCache {
     }
 
     public static Optional<Map<String, PlayerInfo.Ranking>> getPlayerRankings(UUID uuid) {
-        return TIERS.computeIfAbsent(uuid, u -> {
+        return TIERS.computeIfAbsent(uuid, _ -> {
             if (uuid.version() == 4) {
                 PlayerInfo.getRankings(TierTagger.getClient(), uuid).thenAccept(info -> TIERS.put(uuid, Optional.ofNullable(info)));
             }

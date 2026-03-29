@@ -42,7 +42,7 @@ public class TTConfigScreen extends TabbedConfigScreen<TierTaggerConfig> {
                     CyclingOption.ofTranslatableEnum("tiertagger.config.highest", TierTaggerConfig.HighestMode.class, config.getHighestMode(), config::setHighestMode, OptionInstance.cachedConstantTooltip(Component.translatable("tiertagger.config.highest.desc"))),
                     CyclingOption.ofBoolean("tiertagger.config.icons", config.isShowIcons(), config::setShowIcons),
                     CyclingOption.ofBoolean("tiertagger.config.playerList", config.isPlayerList(), config::setPlayerList),
-                    new SimpleButton("tiertagger.clear", b -> TierCache.clearCache()),
+                    new SimpleButton("tiertagger.clear", _ -> TierCache.clearCache()),
                     new ScreenOpenButton("tiertagger.config.search", PlayerSearchScreen::new)
             };
         }
@@ -60,7 +60,7 @@ public class TTConfigScreen extends TabbedConfigScreen<TierTaggerConfig> {
             List<WidgetCreator> widgets = Arrays.stream(TierList.values())
                     .map(t -> {
                         boolean isCurrent = current.isPresent() && current.get() == t;
-                        return new SimpleButton(Component.literal(t.styledName(isCurrent)), b -> {
+                        return new SimpleButton(Component.literal(t.styledName(isCurrent)), _ -> {
                             config.setApiUrl(t.getUrl());
                             TierTagger.getManager().saveConfig();
                             TTConfigScreen.this.onClose();
@@ -71,7 +71,7 @@ public class TTConfigScreen extends TabbedConfigScreen<TierTaggerConfig> {
                     .collect(Collectors.toList());
 
             if (current.isEmpty()) {
-                widgets.add(new SimpleButton(Component.literal("Custom (selected, " + config.getApiUrl() + ")"), b -> {}, false));
+                widgets.add(new SimpleButton(Component.literal("Custom (selected, " + config.getApiUrl() + ")"), _ -> {}, false));
             }
 
             return widgets.toArray(WidgetCreator[]::new);

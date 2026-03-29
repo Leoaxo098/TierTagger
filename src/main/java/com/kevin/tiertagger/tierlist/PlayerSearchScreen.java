@@ -3,7 +3,7 @@ package com.kevin.tiertagger.tierlist;
 import com.kevin.tiertagger.TierCache;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.gui.screens.Screen;
@@ -36,17 +36,16 @@ public class PlayerSearchScreen extends CloseableScreen {
     protected void init() {
         String username = I18n.get("tiertagger.search.user");
         this.textField = this.addWidget(new TextInputWidget(this.width / 2 - 100, 116, 200, 20,
-                "", s -> {
-        }, username, s -> s.matches("[a-zA-Z0-9_-]+"), 32));
+                "", _ -> {}, username, s -> s.matches("[a-zA-Z0-9_-]+"), 32));
 
         this.searchButton = this.addRenderableWidget(
-                Button.builder(Component.translatable("tiertagger.search"), button -> this.loadAndShowProfile())
+                Button.builder(Component.translatable("tiertagger.search"), _ -> this.loadAndShowProfile())
                         .bounds(this.width / 2 - 100, this.height / 4 + 96 + 12, 200, 20)
                         .build()
         );
 
         this.addRenderableWidget(
-                Button.builder(CommonComponents.GUI_CANCEL, button -> {
+                Button.builder(CommonComponents.GUI_CANCEL, _ -> {
                             if (this.future != null) {
                                 this.future.cancel(true);
                             }
@@ -84,7 +83,7 @@ public class PlayerSearchScreen extends CloseableScreen {
         this.future = TierCache.searchPlayer(username)
                 .thenCombine(skinFuture, (info, skin) -> new PlayerInfoScreen(this, info, skin))
                 .thenAccept(screen -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(screen)))
-                .whenComplete((v, t) -> {
+                .whenComplete((_, t) -> {
                     if (t != null) {
                         Ukutils.sendToast(Component.translatable("tiertagger.search.unknown"), null);
                     }
@@ -101,9 +100,9 @@ public class PlayerSearchScreen extends CloseableScreen {
     }
 
     @Override
-    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 16777215);
-        this.textField.render(graphics, mouseX, mouseY, delta);
+    public void extractRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
+        graphics.centeredText(this.font, this.title, this.width / 2, 20, 16777215);
+        this.textField.extractRenderState(graphics, mouseX, mouseY, delta);
     }
 }

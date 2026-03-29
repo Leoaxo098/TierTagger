@@ -23,7 +23,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.uku3lig.ukulib.config.ConfigManager;
-import net.uku3lig.ukulib.utils.PlayerArgumentType;
+import net.uku3lig.ukulib.fabric.PlayerArgumentType;
 import net.uku3lig.ukulib.utils.Ukutils;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -41,8 +41,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class TierTagger implements ModInitializer {
     public static final String MOD_ID = "tiertagger";
@@ -66,7 +66,7 @@ public class TierTagger implements ModInitializer {
     public void onInitialize() {
         TierCache.init();
 
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registry) -> dispatcher.register(
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
                 literal(MOD_ID)
                         .then(argument("player", PlayerArgumentType.player())
                                 .executes(TierTagger::displayTierInfo))));
@@ -78,7 +78,7 @@ public class TierTagger implements ModInitializer {
 
                     if (mc.player != null) {
                         Component message = Component.literal("Displayed gamemode: ").append(next.asStyled(false));
-                        mc.player.displayClientMessage(message, true);
+                        mc.player.sendOverlayMessage(message);
                     }
                 });
 
@@ -161,7 +161,7 @@ public class TierTagger implements ModInitializer {
     private static int displayTierInfo(CommandContext<FabricClientCommandSource> ctx) {
         PlayerArgumentType.PlayerSelector selector = ctx.getArgument("player", PlayerArgumentType.PlayerSelector.class);
 
-        Optional<Map<String, PlayerInfo.Ranking>> rankings = ctx.getSource().getWorld().players().stream()
+        Optional<Map<String, PlayerInfo.Ranking>> rankings = ctx.getSource().getLevel().players().stream()
                 .filter(p -> p.getScoreboardName().equalsIgnoreCase(selector.name()) || p.getStringUUID().equalsIgnoreCase(selector.name()))
                 .findFirst()
                 .map(Entity::getUUID)
@@ -173,7 +173,7 @@ public class TierTagger implements ModInitializer {
             ctx.getSource().sendFeedback(Component.literal("[TierTagger] Searching..."));
             TierCache.searchPlayer(selector.name())
                     .thenAccept(p -> Minecraft.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
-                    .exceptionally(t -> {
+                    .exceptionally(_ -> {
                         ctx.getSource().sendError(Component.literal("Could not find player " + selector.name()));
                         return null;
                     });

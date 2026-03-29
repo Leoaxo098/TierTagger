@@ -67,7 +67,7 @@ public record PlayerInfo(String uuid, String name, Map<String, Ranking> rankings
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenApply(s -> TierTagger.GSON.fromJson(s, PlayerInfo.class))
-                .whenComplete((i, t) -> {
+                .whenComplete((_, t) -> {
                     if (t != null) TierTagger.getLogger().warn("Error getting player info ({})", uuid, t);
                 });
     }
@@ -79,7 +79,7 @@ public record PlayerInfo(String uuid, String name, Map<String, Ranking> rankings
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenApply(s -> TierTagger.GSON.fromJson(s, new TypeToken<Map<String, Ranking>>() {}))
-                .whenComplete((i, t) -> {
+                .whenComplete((_, t) -> {
                     if (t != null) TierTagger.getLogger().warn("Error getting player rankings ({})", uuid, t);
                 });
     }
@@ -91,7 +91,7 @@ public record PlayerInfo(String uuid, String name, Map<String, Ranking> rankings
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenApply(s -> TierTagger.GSON.fromJson(s, PlayerInfo.class))
-                .whenComplete((i, t) -> {
+                .whenComplete((_, t) -> {
                     if (t != null) TierTagger.getLogger().warn("Error searching player {}", query, t);
                 });
     }

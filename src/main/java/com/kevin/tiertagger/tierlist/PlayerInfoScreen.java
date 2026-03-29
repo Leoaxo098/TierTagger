@@ -5,7 +5,7 @@ import com.kevin.tiertagger.model.GameMode;
 import com.kevin.tiertagger.model.PlayerInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.gui.components.StringWidget;
@@ -32,7 +32,7 @@ public class PlayerInfoScreen extends CloseableScreen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> Minecraft.getInstance().setScreen(parent))
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, _ -> Minecraft.getInstance().setScreen(parent))
                 .bounds(this.width / 2 - 100, this.height - 27, 200, 20)
                 .build());
 
@@ -60,19 +60,19 @@ public class PlayerInfoScreen extends CloseableScreen {
     }
 
     @Override
-    public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        super.render(graphics, mouseX, mouseY, delta);
+    public void extractRenderState(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(graphics, mouseX, mouseY, delta);
 
-        graphics.drawCenteredString(this.font, this.info.name() + "'s profile", this.width / 2, 20, 0xFFFFFFFF);
+        graphics.centeredText(this.font, this.info.name() + "'s profile", this.width / 2, 20, 0xFFFFFFFF);
 
         int rankingHeight = this.info.rankings().size() * 11;
         int infoHeight = 56; // 4 lines of text (10 px tall) + 6 px padding
         int startY = (this.height - infoHeight - rankingHeight) / 2;
 
-        graphics.drawString(this.font, getRegionText(this.info), this.width / 2 + 5, startY, 0xFFFFFFFF);
-        graphics.drawString(this.font, getPointsText(this.info), this.width / 2 + 5, startY + 15, 0xFFFFFFFF);
-        graphics.drawString(this.font, getRankText(this.info), this.width / 2 + 5, startY + 30, 0xFFFFFFFF);
-        graphics.drawString(this.font, "Rankings:", this.width / 2 + 5, startY + 45, 0xFFFFFFFF);
+        graphics.text(this.font, getRegionText(this.info), this.width / 2 + 5, startY, 0xFFFFFFFF);
+        graphics.text(this.font, getPointsText(this.info), this.width / 2 + 5, startY + 15, 0xFFFFFFFF);
+        graphics.text(this.font, getRankText(this.info), this.width / 2 + 5, startY + 30, 0xFFFFFFFF);
+        graphics.text(this.font, "Rankings:", this.width / 2 + 5, startY + 45, 0xFFFFFFFF);
     }
 
     private Component formatTier(@NotNull GameMode gamemode, PlayerInfo.Ranking ranking) {
