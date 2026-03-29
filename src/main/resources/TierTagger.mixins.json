@@ -9,6 +9,7 @@
   "client": [
     "MinecraftClientAccessor",
     "MixinPlayerListHud",
+    "MixinTextDisplayEntityRenderer",
     "MixinTitleScreen"
   ],
   "injectors": {
