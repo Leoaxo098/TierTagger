@@ -47,7 +47,7 @@ public class MixinTitleScreen extends Screen {
                     Component.translatable("menu.quit"),
                     Component.translatable("tiertagger.outdated.ignore")
             ));
-        } else if (currentVersion != null && latestVersion != null && currentVersion.compareTo(latestVersion) < 0) {
+        } else if (currentVersion != null && latestVersion != null && latestVersion.isHigherThan(currentVersion)) {
             Component newVersion = Component.literal(latestVersion.toString()).withStyle(ChatFormatting.GREEN);
 
             Minecraft.getInstance().setScreen(new ConfirmScreen(
