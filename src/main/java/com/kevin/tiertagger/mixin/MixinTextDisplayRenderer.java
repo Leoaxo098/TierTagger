@@ -35,7 +35,11 @@ public class MixinTextDisplayRenderer {
             final String lineString = lineText.getString();
             if (lineString.isBlank() || !lineString.contains(player.getScoreboardName())) continue;
 
-            final Component modified = TierTagger.appendTier(player.getUUID(), lineText);
+            final Component modified = TierTagger.appendTier(
+                    player.getUUID(),
+                    player.getScoreboardName(),
+                    lineText
+            );
             if (modified == lineText) return; // no pops or counter disabled
 
             final FormattedCharSequence modifiedSeq = modified.getVisualOrderText();

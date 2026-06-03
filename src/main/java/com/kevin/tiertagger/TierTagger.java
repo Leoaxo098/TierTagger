@@ -85,13 +85,32 @@ public class TierTagger implements ModInitializer {
         checkForUpdates();
     }
 
-    public static Component appendTier(UUID uuid, Component text) {
-        MutableComponent following = getPlayerTier(uuid)
-                .map(entry -> {
-                    Component tierText = getRankingText(entry.ranking(), false);
+    /**
+     * Append a tier prefix to a player's name component. Dispatches by UUID
+     * (default) or by name (Viet tierlist).
+     */
+    public static Component appendTier(UUID uuid, String name, Component text) {
+        Optional<PlayerInfo.NamedRanking> tier;
+        if (TierCache.isNameLookupActive()) {
+            tier = getPlayerTierByName(name);
+        } else {
+            tier = getPlayerTier(uuid);
+        }
+        return appendTierInternal(tier, text);
+    }
 
-                    if (manager.getConfig().isShowIcons() && entry.mode() != null && entry.mode().icon().isPresent()) {
-                        return Component.literal(entry.mode().icon().get().toString()).append(tierText);
+    /** Backwards-compatible UUID-only entry point used by existing call sites. */
+    public static Component appendTier(UUID uuid, Component text) {
+        return appendTierInternal(getPlayerTier(uuid), text);
+    }
+
+    private static Component appendTierInternal(Optional<PlayerInfo.NamedRanking> entry, Component text) {
+        MutableComponent following = entry
+                .map(e -> {
+                    Component tierText = getRankingText(e.ranking(), false);
+
+                    if (manager.getConfig().isShowIcons() && e.mode() != null && e.mode().icon().isPresent()) {
+                        return Component.literal(e.mode().icon().get().toString()).append(tierText);
                     } else {
                         return tierText.copy();
                     }
@@ -110,6 +129,36 @@ public class TierTagger implements ModInitializer {
         GameMode mode = manager.getConfig().getGameMode();
 
         return TierCache.getPlayerRankings(uuid)
+                .map(rankings -> {
+                    PlayerInfo.Ranking ranking = rankings.get(mode.id());
+                    Optional<PlayerInfo.NamedRanking> highest = PlayerInfo.getHighestRanking(rankings);
+                    TierTaggerConfig.HighestMode highestMode = manager.getConfig().getHighestMode();
+
+                    if (ranking == null) {
+                        if (highestMode != TierTaggerConfig.HighestMode.NEVER && highest.isPresent()) {
+                            return highest.get();
+                        } else {
+                            return null;
+                        }
+                    } else {
+                        if (highestMode == TierTaggerConfig.HighestMode.ALWAYS && highest.isPresent()) {
+                            return highest.get();
+                        } else {
+                            return ranking.asNamed(mode);
+                        }
+                    }
+                });
+    }
+
+    /**
+     * Name-keyed variant of {@link #getPlayerTier(UUID)} for tierlists
+     * (Viet tierlist) that don't expose a UUID endpoint.
+     */
+    public static Optional<PlayerInfo.NamedRanking> getPlayerTierByName(String name) {
+        if (name == null) return Optional.empty();
+        GameMode mode = manager.getConfig().getGameMode();
+
+        return TierCache.getPlayerRankingsByName(name)
                 .map(rankings -> {
                     PlayerInfo.Ranking ranking = rankings.get(mode.id());
                     Optional<PlayerInfo.NamedRanking> highest = PlayerInfo.getHighestRanking(rankings);
@@ -160,6 +209,18 @@ public class TierTagger implements ModInitializer {
 
     private static int displayTierInfo(CommandContext<FabricClientCommandSource> ctx) {
         PlayerArgumentType.PlayerSelector selector = ctx.getArgument("player", PlayerArgumentType.PlayerSelector.class);
+
+        if (TierCache.isNameLookupActive()) {
+            // Viet tierlist: only has a name-based search endpoint, so always go through TierCache.searchPlayer
+            ctx.getSource().sendFeedback(Component.literal("[TierTagger] Searching..."));
+            TierCache.searchPlayer(selector.name())
+                    .thenAccept(p -> Minecraft.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
+                    .exceptionally(t -> {
+                        ctx.getSource().sendError(Component.literal("Could not find player " + selector.name()));
+                        return null;
+                    });
+            return 0;
+        }
 
         Optional<Map<String, PlayerInfo.Ranking>> rankings = ctx.getSource().getWorld().players().stream()
                 .filter(p -> p.getScoreboardName().equalsIgnoreCase(selector.name()) || p.getStringUUID().equalsIgnoreCase(selector.name()))
