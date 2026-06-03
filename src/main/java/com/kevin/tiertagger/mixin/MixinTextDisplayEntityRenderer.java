@@ -36,7 +36,11 @@ public class MixinTextDisplayEntityRenderer {
             final String lineString = lineText.getString();
             if (lineString.isBlank() || !lineString.contains(player.getNameForScoreboard())) continue;
 
-            final Text modified = TierTagger.appendTier(player.getUuid(), lineText);
+            final Text modified = TierTagger.appendTier(
+                    player.getUuid(),
+                    player.getNameForScoreboard(),
+                    lineText
+            );
             if (modified == lineText) return; // no pops or counter disabled
 
             final OrderedText modifiedSeq = modified.asOrderedText();
@@ -54,7 +58,7 @@ public class MixinTextDisplayEntityRenderer {
         }
     }
 
-    // copied from ukulib
+    // copied from ukulib (ukulib 1.5.0+1.21.2 doesn't have getStyledText yet)
     @Unique
     private static Text getStyledText(OrderedText text) {
         MutableText builder = Text.empty();
