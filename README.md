@@ -6,7 +6,7 @@ A gorgeous Minecraft Fabric mod that displays every player's tier from the **Vie
 
 > HT1 | Ooh_Netiyiy
 
-A very small but very useful mod — you'll likely likey. :)
+A very small but very useful mod â€” you'll likely likey. :)
 
 ## Features
 
@@ -28,15 +28,15 @@ You can change the active tierlist in the mod's config screen (set the API URL t
 
 ## Authors
 
-- **uku** — original author
-- **netiyiy** — original creator
-- **leoaxo098** — fork maintainer
+- **uku** â€” original author
+- **netiyiy** â€” original creator
+- **leoaxo098** â€” fork maintainer
 
 ## Source
 
-- This fork: <https://github.com/Leoaxo098/TierTagger.git>
-- Original project: <https://github.com/mctiers-dev/TierTagger>
+- This fork: [VTL TierTagger](https://github.com/Leoaxo098/TierTagger.git)
+- Original project: [TierTagger](https://github.com/mctiers-dev/TierTagger)
 
 ## License
 
-This project is licensed under the **MPL-2.0** (Mozilla Public License 2.0) — see the LICENSE file for the full text.
+This project is licensed under the **MPL-2.0** (Mozilla Public License 2.0) â€” see the LICENSE file for the full text.
