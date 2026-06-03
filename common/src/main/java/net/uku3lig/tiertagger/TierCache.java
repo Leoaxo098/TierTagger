@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 public class TierCache {
     private static final List<GameMode> GAMEMODES = new ArrayList<>();
     private static final Map<UUID, Optional<Map<String, PlayerInfo.Ranking>>> TIERS = new ConcurrentHashMap<>();
+    private static final Map<String, Optional<Map<String, PlayerInfo.Ranking>>> TIERS_BY_NAME = new ConcurrentHashMap<>();
 
     public static void init() {
         try {
@@ -42,6 +43,18 @@ public class TierCache {
         });
     }
 
+    /**
+     * Name-keyed variant of {@link #getPlayerRankings(UUID)} for tierlists
+     * (Viet tierlist) that don't expose a UUID endpoint.
+     */
+    public static Optional<Map<String, PlayerInfo.Ranking>> getPlayerRankingsByName(String name) {
+        return TIERS_BY_NAME.computeIfAbsent(name, _ -> {
+            TierTagger.getLogger().info("Fetching name-keyed ranking for {}", name);
+            PlayerInfo.getRankingsByName(TierTagger.getClient(), name).thenAccept(info -> TIERS_BY_NAME.put(name, Optional.ofNullable(info)));
+            return Optional.empty();
+        });
+    }
+
     public static CompletableFuture<PlayerInfo> searchPlayer(String query) {
         return PlayerInfo.search(TierTagger.getClient(), query).thenApply(p -> {
             UUID uuid = parseUUID(p.uuid());
@@ -50,8 +63,15 @@ public class TierCache {
         });
     }
 
+    public static boolean isNameLookupActive() {
+        return TierList.findByUrl(TierTagger.getManager().getConfig().getApiUrl())
+                .map(TierList::usesNameLookup)
+                .orElse(false);
+    }
+
     public static void clearCache() {
         TIERS.clear();
+        TIERS_BY_NAME.clear();
     }
 
     public static GameMode findNextMode(GameMode current) {

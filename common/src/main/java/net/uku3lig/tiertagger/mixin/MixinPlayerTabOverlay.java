@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+import java.util.UUID;
+
 @Mixin(PlayerTabOverlay.class)
 public class MixinPlayerTabOverlay {
     @ModifyReturnValue(method = "getNameForDisplay", at = @At("RETURN"))
@@ -17,7 +19,9 @@ public class MixinPlayerTabOverlay {
     public Component prependTier(Component original, PlayerInfo entry) {
         TierTaggerConfig config = TierTagger.getManager().getConfig();
         if (config.isEnabled() && config.isPlayerList()) {
-            return TierTagger.appendTier(entry.getProfile().id(), original);
+            UUID uuid = entry.getProfile().id();
+            String name = entry.getProfile().name();
+            return TierTagger.appendTier(uuid, name, original);
         } else {
             return original;
         }

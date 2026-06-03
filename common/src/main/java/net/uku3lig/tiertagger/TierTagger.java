@@ -72,13 +72,21 @@ public class TierTagger {
         checkForUpdates();
     }
 
-    public static Component appendTier(UUID uuid, Component text) {
-        MutableComponent following = getPlayerTier(uuid)
-                .map(entry -> {
-                    Component tierText = getRankingText(entry.ranking(), false);
+    public static Component appendTier(UUID uuid, String name, Component text) {
+        return appendTierInternal(getPlayerTier(uuid, name), text);
+    }
 
-                    if (manager.getConfig().isShowIcons() && entry.mode() != null && entry.mode().icon().isPresent()) {
-                        return Component.literal(entry.mode().icon().get().toString()).append(tierText);
+    public static Component appendTier(UUID uuid, Component text) {
+        return appendTierInternal(getPlayerTier(uuid), text);
+    }
+
+    private static Component appendTierInternal(Optional<PlayerInfo.NamedRanking> entry, Component text) {
+        MutableComponent following = entry
+                .map(e -> {
+                    Component tierText = getRankingText(e.ranking(), false);
+
+                    if (manager.getConfig().isShowIcons() && e.mode() != null && e.mode().icon().isPresent()) {
+                        return Component.literal(e.mode().icon().get().toString()).append(tierText);
                     } else {
                         return tierText.copy();
                     }
@@ -93,29 +101,34 @@ public class TierTagger {
         return text;
     }
 
-    public static Optional<PlayerInfo.NamedRanking> getPlayerTier(UUID uuid) {
+    public static Optional<PlayerInfo.NamedRanking> getPlayerTier(UUID uuid, String name) {
+        if (TierCache.isNameLookupActive()) {
+            return TierCache.getPlayerRankingsByName(name)
+                    .flatMap(rankings -> resolveNamedRanking(rankings));
+        }
+        return getPlayerTier(uuid);
+    }
+
+    private static Optional<PlayerInfo.NamedRanking> resolveNamedRanking(java.util.Map<String, PlayerInfo.Ranking> rankings) {
         GameMode mode = manager.getConfig().getGameMode();
+        PlayerInfo.Ranking ranking = rankings.get(mode.id());
+        Optional<PlayerInfo.NamedRanking> highest = PlayerInfo.getHighestRanking(rankings);
+        TierTaggerConfig.HighestMode highestMode = manager.getConfig().getHighestMode();
 
-        return TierCache.getPlayerRankings(uuid)
-                .map(rankings -> {
-                    PlayerInfo.Ranking ranking = rankings.get(mode.id());
-                    Optional<PlayerInfo.NamedRanking> highest = PlayerInfo.getHighestRanking(rankings);
-                    TierTaggerConfig.HighestMode highestMode = manager.getConfig().getHighestMode();
+        if (ranking == null) {
+            if (highestMode != TierTaggerConfig.HighestMode.NEVER && highest.isPresent()) {
+                return highest;
+            }
+            return Optional.empty();
+        }
+        if (highestMode == TierTaggerConfig.HighestMode.ALWAYS && highest.isPresent()) {
+            return highest;
+        }
+        return Optional.of(ranking.asNamed(mode));
+    }
 
-                    if (ranking == null) {
-                        if (highestMode != TierTaggerConfig.HighestMode.NEVER && highest.isPresent()) {
-                            return highest.get();
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        if (highestMode == TierTaggerConfig.HighestMode.ALWAYS && highest.isPresent()) {
-                            return highest.get();
-                        } else {
-                            return ranking.asNamed(mode);
-                        }
-                    }
-                });
+    public static Optional<PlayerInfo.NamedRanking> getPlayerTier(UUID uuid) {
+        return TierCache.getPlayerRankings(uuid).flatMap(TierTagger::resolveNamedRanking);
     }
 
     private static MutableComponent getTierText(int tier, int pos, boolean retired) {

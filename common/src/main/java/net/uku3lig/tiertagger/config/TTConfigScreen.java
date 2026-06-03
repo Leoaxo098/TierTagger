@@ -2,7 +2,7 @@ package net.uku3lig.tiertagger.config;
 
 import net.uku3lig.tiertagger.TierCache;
 import net.uku3lig.tiertagger.TierTagger;
-import net.uku3lig.tiertagger.model.TierList;
+import net.uku3lig.tiertagger.TierList;
 import net.uku3lig.tiertagger.tierlist.PlayerSearchScreen;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.gui.components.Tooltip;
