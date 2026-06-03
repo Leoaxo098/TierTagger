@@ -11,6 +11,7 @@ import java.util.Optional;
 public enum TierList {
     MCTIERS("MCTiers", "https://mctiers.com/api", '\uE901'),
     SUBTIERS("SubTiers", "https://subtiers.net/api", '\uE902'),
+    VIET_TIERLIST("Viet TierList", "https://www.tierslist.net/api", '\uE903'),
     ;
 
     private final String name;
@@ -23,10 +24,15 @@ public enum TierList {
         return s;
     }
 
+    public boolean usesNameLookup() {
+        return this == VIET_TIERLIST;
+    }
+
     public static Optional<TierList> findByUrl(String url) {
+        if (url == null) return Optional.empty();
         if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
 
-        final String finalUrl = url; // i :heart: java
+        final String finalUrl = url;
         return Arrays.stream(values()).filter(list -> list.url.equals(finalUrl)).findFirst();
     }
 }

@@ -18,7 +18,24 @@ import java.util.concurrent.CompletableFuture;
 public record GameMode(String id, String title) {
     public static final GameMode NONE = new GameMode("annoying_long_id_that_no_one_will_ever_use_just_to_make_sure", "§cNone§r");
 
+    public static final List<GameMode> VIET_STATIC_GAMEMODES = List.of(
+            new GameMode("vanilla", "Vanilla"),
+            new GameMode("sword", "Sword"),
+            new GameMode("uhc", "UHC"),
+            new GameMode("pot", "Pot"),
+            new GameMode("nethop", "Nethop"),
+            new GameMode("smp", "SMP"),
+            new GameMode("axe", "Axe"),
+            new GameMode("mace", "Mace"),
+            new GameMode("spear", "Spear"),
+            new GameMode("trident", "Trident")
+    );
+
     public static CompletableFuture<List<GameMode>> fetchGamemodes(HttpClient client) {
+        if (isVietTierlistActive()) {
+            return CompletableFuture.completedFuture(VIET_STATIC_GAMEMODES);
+        }
+
         String endpoint = TierTagger.getManager().getConfig().getApiUrl() + "/v2/mode/list";
         final HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint)).GET().build();
 
@@ -31,6 +48,12 @@ public record GameMode(String id, String title) {
                         return new GameMode(e.getKey(), title);
                     }).toList();
                 });
+    }
+
+    private static boolean isVietTierlistActive() {
+        return TierList.findByUrl(TierTagger.getManager().getConfig().getApiUrl())
+                .map(TierList::usesNameLookup)
+                .orElse(false);
     }
 
     public boolean isNone() {
@@ -59,13 +82,13 @@ public record GameMode(String id, String title) {
             case "og_vanilla" -> new Pair<>('\uE810', TextColor.fromFormatting(Formatting.GOLD));
             case "speed" -> new Pair<>('\uE811', TextColor.fromRgb(0x43a9d1));
             case "trident" -> new Pair<>('\uE812', TextColor.fromRgb(0x579b8c));
+            case "spear" -> new Pair<>('•', TextColor.fromFormatting(Formatting.WHITE));
             default -> new Pair<>('•', TextColor.fromFormatting(Formatting.WHITE));
         };
     }
 
     public Optional<Character> icon() {
         Pair<Character, TextColor> pair = this.iconAndColor();
-
         return pair.getRight().getRgb() == 0xFFFFFF ? Optional.empty() : Optional.of(pair.getLeft());
     }
 
@@ -73,7 +96,7 @@ public record GameMode(String id, String title) {
         Pair<Character, TextColor> pair = this.iconAndColor();
 
         if (pair.getRight().getRgb() == 0xFFFFFF && !withDefaultDot) {
-            return Text.of(this.title);
+            return Text.literal(this.title);
         } else {
             Text name = Text.literal(this.title).styled(s -> s.withColor(pair.getRight()));
             return Text.literal(pair.getLeft() + " ").append(name);

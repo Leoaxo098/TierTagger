@@ -2,6 +2,9 @@ package com.kevin.tiertagger;
 
 import com.kevin.tiertagger.model.GameMode;
 import com.kevin.tiertagger.model.PlayerInfo;
+import com.kevin.tiertagger.model.TierList;
+import com.kevin.tiertagger.viettierlist.VietTierListApi;
+import com.kevin.tiertagger.viettierlist.VietTierListConverter;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +13,12 @@ import java.util.concurrent.ExecutionException;
 
 public class TierCache {
     private static final List<GameMode> GAMEMODES = new ArrayList<>();
+
+    /** UUID-keyed cache for tierlists that expose a /v2/profile/{uuid}/... API (MCTiers, SubTiers). */
     private static final Map<UUID, Optional<Map<String, PlayerInfo.Ranking>>> TIERS = new ConcurrentHashMap<>();
+
+    /** Name-keyed cache for tierlists that only expose a search-by-username API (Viet tierlist). */
+    private static final Map<String, Optional<Map<String, PlayerInfo.Ranking>>> TIERS_BY_NAME = new ConcurrentHashMap<>();
 
     public static void init() {
         try {
@@ -32,6 +40,19 @@ public class TierCache {
         }
     }
 
+    /**
+     * Look up a player's tier rankings, dispatching to the correct cache/API
+     * based on the active tierlist.
+     */
+    public static Optional<Map<String, PlayerInfo.Ranking>> getPlayerRankings(UUID uuid, String name) {
+        if (isNameLookupActive()) {
+            if (name == null) return Optional.empty();
+            return getPlayerRankingsByName(name);
+        }
+        return getPlayerRankings(uuid);
+    }
+
+    /** UUID-keyed lookup (MCTiers / SubTiers path). */
     public static Optional<Map<String, PlayerInfo.Ranking>> getPlayerRankings(UUID uuid) {
         return TIERS.computeIfAbsent(uuid, u -> {
             if (uuid.version() == 4) {
@@ -42,7 +63,38 @@ public class TierCache {
         });
     }
 
+    /**
+     * Name-keyed lookup (Viet tierlist path). The first call for a name hits
+     * the network; subsequent calls return the cached value.
+     */
+    public static Optional<Map<String, PlayerInfo.Ranking>> getPlayerRankingsByName(String name) {
+        final String key = name.toLowerCase(Locale.ROOT);
+        return TIERS_BY_NAME.computeIfAbsent(key, n -> {
+            VietTierListApi.search(TierTagger.getClient(), name)
+                    .thenApply(resp -> resp == null
+                            ? Optional.<Map<String, PlayerInfo.Ranking>>empty()
+                            : Optional.of(VietTierListConverter.toRankings(resp)))
+                    .thenAccept(opt -> TIERS_BY_NAME.put(key, opt))
+                    .exceptionally(t -> {
+                        TierTagger.getLogger().warn("Viet tierlist lookup failed for {}", name, t);
+                        TIERS_BY_NAME.put(key, Optional.empty());
+                        return null;
+                    });
+            return Optional.empty();
+        });
+    }
+
     public static CompletableFuture<PlayerInfo> searchPlayer(String query) {
+        if (isNameLookupActive()) {
+            return VietTierListApi.search(TierTagger.getClient(), query)
+                    .thenApply(resp -> {
+                        PlayerInfo info = VietTierListConverter.toPlayerInfo(resp);
+                        if (info != null) {
+                            TIERS_BY_NAME.put(query.toLowerCase(Locale.ROOT), Optional.of(info.rankings()));
+                        }
+                        return info;
+                    });
+        }
         return PlayerInfo.search(TierTagger.getClient(), query).thenApply(p -> {
             UUID uuid = parseUUID(p.uuid());
             TIERS.put(uuid, Optional.of(p.rankings()));
@@ -52,6 +104,7 @@ public class TierCache {
 
     public static void clearCache() {
         TIERS.clear();
+        TIERS_BY_NAME.clear();
     }
 
     public static GameMode findNextMode(GameMode current) {
@@ -68,6 +121,12 @@ public class TierCache {
 
     public static GameMode findModeOrUgly(String id) {
         return findMode(id).orElseGet(() -> new GameMode(id, id));
+    }
+
+    public static boolean isNameLookupActive() {
+        return TierList.findByUrl(TierTagger.getManager().getConfig().getApiUrl())
+                .map(TierList::usesNameLookup)
+                .orElse(false);
     }
 
     private static UUID parseUUID(String uuid) {
