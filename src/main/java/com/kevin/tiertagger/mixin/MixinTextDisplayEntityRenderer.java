@@ -19,8 +19,6 @@ import java.util.List;
 
 @Mixin(DisplayEntityRenderer.TextDisplayEntityRenderer.class)
 public class MixinTextDisplayEntityRenderer {
-    // Replaces cachedInfo in the render state so that text positioning, background width,
-    // and rendered contents all agree on the counter-appended line width
     @Inject(method = "updateRenderState(Lnet/minecraft/entity/decoration/DisplayEntity$TextDisplayEntity;Lnet/minecraft/client/render/entity/state/TextDisplayEntityRenderState;F)V",
             at = @At("RETURN"))
     private void addTier(DisplayEntity.TextDisplayEntity entity, TextDisplayEntityRenderState renderState, float f, CallbackInfo ci) {
@@ -35,8 +33,12 @@ public class MixinTextDisplayEntityRenderer {
             final String lineString = lineText.getString();
             if (lineString.isBlank() || !lineString.contains(player.getNameForScoreboard())) continue;
 
-            final Text modified = TierTagger.appendTier(player.getUuid(), lineText);
-            if (modified == lineText) return; // no pops or counter disabled
+            final Text modified = TierTagger.appendTier(
+                    player.getUuid(),
+                    player.getNameForScoreboard(),
+                    lineText
+            );
+            if (modified == lineText) return;
 
             final OrderedText modifiedSeq = modified.asOrderedText();
             final int newLineWidth = MinecraftClient.getInstance().textRenderer.getWidth(modified);
