@@ -17,7 +17,7 @@ public class MixinPlayerListHud {
     public Text prependTier(Text original, PlayerListEntry entry) {
         TierTaggerConfig config = TierTagger.getManager().getConfig();
         if (config.isEnabled() && config.isPlayerList()) {
-            return TierTagger.appendTier(entry.getProfile().id(), original);
+            return TierTagger.appendTier(entry.getProfile().id(), entry.getProfile().name(), original);
         } else {
             return original;
         }
