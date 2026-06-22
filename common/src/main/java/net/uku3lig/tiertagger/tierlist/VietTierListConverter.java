@@ -34,7 +34,7 @@ public final class VietTierListConverter {
                 toRankings(response),
                 p.region(),
                 p.points(),
-                /* overall = */ p.points(),
+                /* overall = */ p.rank(),
                 /* badges   = */ Collections.emptyList(),
                 /* combatMaster = */ false
         );
