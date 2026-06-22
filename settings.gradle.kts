@@ -1,4 +1,4 @@
-rootProject.name = "tiertagger"
+rootProject.name = "VTL-TierTagger"
 
 pluginManagement {
     repositories {
