@@ -11,7 +11,7 @@ A very small but very useful mod — you'll likely likey. :)
 ## Features
 
 - Shows a player's tier next to their nametag automatically
-- Supports multiple tierlists (MCTiers, SubTiers, **Viet tierlist**)
+- Supports multiple tierlists (MCTiers, SubTiers, **Viet TierList**)
 - Switch gamemodes on the fly with a keybind
 - Optional icons and colors per gamemode
 - Also works in the player list (TAB) and on Text Display entities
@@ -20,7 +20,7 @@ A very small but very useful mod — you'll likely likey. :)
 
 | Tierlist | URL | API Style |
 |---|---|---|
-| **Viet tierlist** (default) | <https://www.tierslist.net/> | Name-based lookup |
+| **Viet TierList** (default) | <https://www.tierslist.net/> | Name-based lookup |
 | MCTiers | <https://mctiers.com/> | UUID-based lookup |
 | SubTiers | <https://subtiers.net/> | UUID-based lookup |
 
