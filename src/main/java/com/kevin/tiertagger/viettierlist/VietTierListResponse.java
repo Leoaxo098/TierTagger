@@ -12,6 +12,7 @@ public record VietTierListResponse(Player player) {
     public record Player(
             @SerializedName("userId") String userId,
             @SerializedName("playerName") String playerName,
+            @SerializedName("rank") int rank,
             int points,
             String region,
             String title,
