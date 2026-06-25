@@ -63,6 +63,8 @@ public class PlayerInfoScreen extends CloseableScreen {
     public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         super.render(graphics, mouseX, mouseY, delta);
 
+        if (this.info == null) return;
+
         graphics.drawCenteredString(this.font, this.info.name() + "'s profile", this.width / 2, 20, 0xFFFFFFFF);
 
         int rankingHeight = this.info.rankings().size() * 11;
