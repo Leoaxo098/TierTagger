@@ -197,10 +197,21 @@ public class TierTagger implements ModInitializer {
     private static int displayTierInfo(CommandContext<FabricClientCommandSource> ctx) {
         PlayerArgumentType.PlayerSelector selector = ctx.getArgument("player", PlayerArgumentType.PlayerSelector.class);
 
+        if (selector == null || selector.name() == null) {
+            ctx.getSource().sendError(Text.literal("Invalid player argument."));
+            return 0;
+        }
+
         if (TierCache.isNameLookupActive()) {
             ctx.getSource().sendFeedback(Text.literal("[TierTagger] Searching..."));
             TierCache.searchPlayer(selector.name())
-                    .thenAccept(p -> MinecraftClient.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
+                    .thenAccept(p -> MinecraftClient.getInstance().execute(() -> {
+                        if (p == null || p.rankings() == null) {
+                            ctx.getSource().sendError(Text.literal("Could not find player " + selector.name()));
+                            return;
+                        }
+                        ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()));
+                    }))
                     .exceptionally(t -> {
                         ctx.getSource().sendError(Text.literal("Could not find player " + selector.name()));
                         return null;
@@ -219,7 +230,13 @@ public class TierTagger implements ModInitializer {
         } else {
             ctx.getSource().sendFeedback(Text.literal("[TierTagger] Searching..."));
             TierCache.searchPlayer(selector.name())
-                    .thenAccept(p -> MinecraftClient.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
+                    .thenAccept(p -> MinecraftClient.getInstance().execute(() -> {
+                        if (p == null || p.rankings() == null) {
+                            ctx.getSource().sendError(Text.literal("Could not find player " + selector.name()));
+                            return;
+                        }
+                        ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()));
+                    }))
                     .exceptionally(t -> {
                         ctx.getSource().sendError(Text.literal("Could not find player " + selector.name()));
                         return null;
