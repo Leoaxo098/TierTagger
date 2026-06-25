@@ -39,6 +39,11 @@ public class TierTaggerFabric implements ClientModInitializer {
     private static int displayTierInfo(CommandContext<FabricClientCommandSource> ctx) {
         PlayerArgumentType.PlayerSelector selector = ctx.getArgument("player", PlayerArgumentType.PlayerSelector.class);
 
+        if (selector == null || selector.name() == null) {
+            ctx.getSource().sendError(Component.literal("Invalid player argument."));
+            return 0;
+        }
+
         Optional<Map<String, PlayerInfo.Ranking>> rankings = ctx.getSource().getLevel().players().stream()
                 .filter(p -> p.getScoreboardName().equalsIgnoreCase(selector.name()) || p.getStringUUID().equalsIgnoreCase(selector.name()))
                 .findFirst()
@@ -50,7 +55,13 @@ public class TierTaggerFabric implements ClientModInitializer {
         } else {
             ctx.getSource().sendFeedback(Component.literal("[TierTagger] Searching..."));
             TierCache.searchPlayer(selector.name())
-                    .thenAccept(p -> Minecraft.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
+                    .thenAccept(p -> Minecraft.getInstance().execute(() -> {
+                        if (p == null || p.rankings() == null) {
+                            ctx.getSource().sendError(Component.literal("Could not find player " + selector.name()));
+                            return;
+                        }
+                        ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()));
+                    }))
                     .exceptionally(_ -> {
                         ctx.getSource().sendError(Component.literal("Could not find player " + selector.name()));
                         return null;
