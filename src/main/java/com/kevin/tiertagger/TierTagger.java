@@ -210,13 +210,18 @@ public class TierTagger implements ModInitializer {
     private static int displayTierInfo(CommandContext<FabricClientCommandSource> ctx) {
         PlayerArgumentType.PlayerSelector selector = ctx.getArgument("player", PlayerArgumentType.PlayerSelector.class);
 
+        if (selector == null || selector.name() == null) {
+            ctx.getSource().sendError(Component.literal("Invalid player argument."));
+            return 0;
+        }
+
         if (TierCache.isNameLookupActive()) {
             // Viet tierlist: only has a name-based search endpoint, so always go through TierCache.searchPlayer
             ctx.getSource().sendFeedback(Component.literal("[TierTagger] Searching..."));
             TierCache.searchPlayer(selector.name())
-                    .thenAccept(p -> Minecraft.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
+                    .thenAccept(p -> deliverSearchResult(ctx, selector.name(), p))
                     .exceptionally(t -> {
-                        ctx.getSource().sendError(Component.literal("Could not find player " + selector.name()));
+                        deliverSearchError(ctx, selector.name());
                         return null;
                     });
             return 0;
@@ -233,9 +238,9 @@ public class TierTagger implements ModInitializer {
         } else {
             ctx.getSource().sendFeedback(Component.literal("[TierTagger] Searching..."));
             TierCache.searchPlayer(selector.name())
-                    .thenAccept(p -> Minecraft.getInstance().execute(() -> ctx.getSource().sendFeedback(printPlayerInfo(selector.name(), p.rankings()))))
+                    .thenAccept(p -> deliverSearchResult(ctx, selector.name(), p))
                     .exceptionally(t -> {
-                        ctx.getSource().sendError(Component.literal("Could not find player " + selector.name()));
+                        deliverSearchError(ctx, selector.name());
                         return null;
                     });
         }
@@ -243,8 +248,22 @@ public class TierTagger implements ModInitializer {
         return 0;
     }
 
+    private static void deliverSearchResult(CommandContext<FabricClientCommandSource> ctx, String name, PlayerInfo player) {
+        Minecraft.getInstance().execute(() -> {
+            if (player == null || player.rankings() == null) {
+                ctx.getSource().sendError(Component.literal("Could not find player " + name));
+                return;
+            }
+            ctx.getSource().sendFeedback(printPlayerInfo(name, player.rankings()));
+        });
+    }
+
+    private static void deliverSearchError(CommandContext<FabricClientCommandSource> ctx, String name) {
+        Minecraft.getInstance().execute(() -> ctx.getSource().sendError(Component.literal("Could not find player " + name)));
+    }
+
     private static Component printPlayerInfo(String name, Map<String, PlayerInfo.Ranking> rankings) {
-        if (rankings.isEmpty()) {
+        if (rankings == null || rankings.isEmpty()) {
             return Component.literal(name + " does not have any tiers.");
         } else {
             MutableComponent text = Component.empty().append("=== Rankings for " + name + " ===");

@@ -89,15 +89,20 @@ public class TierCache {
             return VietTierListApi.search(TierTagger.getClient(), query)
                     .thenApply(resp -> {
                         PlayerInfo info = VietTierListConverter.toPlayerInfo(resp);
-                        if (info != null) {
+                        if (info != null && info.rankings() != null) {
                             TIERS_BY_NAME.put(query.toLowerCase(Locale.ROOT), Optional.of(info.rankings()));
                         }
                         return info;
                     });
         }
         return PlayerInfo.search(TierTagger.getClient(), query).thenApply(p -> {
+            if (p == null || p.uuid() == null) {
+                return null;
+            }
             UUID uuid = parseUUID(p.uuid());
-            TIERS.put(uuid, Optional.of(p.rankings()));
+            if (p.rankings() != null) {
+                TIERS.put(uuid, Optional.of(p.rankings()));
+            }
             return p;
         });
     }
