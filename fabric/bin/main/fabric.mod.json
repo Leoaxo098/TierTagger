@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "tiertagger",
   "version": "${version}",
-  "name": "TierTagger",
+  "name": "VTL TierTagger",
   "description": "Display player's PvP Tiers in their nametag!",
-  "authors": ["uku", "netiyiy (original creator)"],
+  "authors": ["uku", "netiyiy (original creator)", "leoaxo098"],
   "contact": {
-    "sources": "https://github.com/mctiers-dev/TierTagger.git"
+    "sources": "https://github.com/Leoaxo098/TierTagger.git "
   },
   "license": "MPL-2.0",
   "icon": "assets/tiertagger/icon.png",

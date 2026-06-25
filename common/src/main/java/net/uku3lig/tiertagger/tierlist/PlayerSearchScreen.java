@@ -81,7 +81,12 @@ public class PlayerSearchScreen extends CloseableScreen {
         });
 
         this.future = TierCache.searchPlayer(username)
-                .thenCombine(skinFuture, (info, skin) -> new PlayerInfoScreen(this, info, skin))
+                .thenCombine(skinFuture, (info, skin) -> {
+                    if (info == null) {
+                        throw new NullPointerException("Player info is null");
+                    }
+                    return new PlayerInfoScreen(this, info, skin);
+                })
                 .thenAccept(screen -> Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(screen)))
                 .whenComplete((_, t) -> {
                     if (t != null) {
